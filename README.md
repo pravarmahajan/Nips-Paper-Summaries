@@ -32,3 +32,11 @@ ___
 
 **Implementations and Results**:
   - Detailed Summary and Results: Link-to-Your-Folder-Name-In-This-Repo. Code: Your-Repo-Here.
+  
+  ### Selective Classification for Deep Neural Networks
+  **Link**: https://papers.nips.cc/paper/7073-selective-classification-for-deep-neural-networks.pdf
+  
+  **Summary** : This paper proposes a new method to construct a selective classifier for a given trained DNN. At test time the classifier rejects instances as needed to grant the desired risk. Performance is measured on ImageNet, CIFAR-10, CIFAR-100 datasets.
+  
+  **To-do** to implement the paper:
+   - Implement SR and MC-dropout confidence-rate functions, κf , and the induced rejection function, gθ(x|κf ) on trained models.
