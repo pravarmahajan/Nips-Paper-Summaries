@@ -1,7 +1,7 @@
 # README
 
 This repository contains the summaries of projects, and code implementation from NIPS 2017.
-It also has a few tips to use to make an awesome summary and implmentation. To 
+It also has a few tips to use to make an awesome summary and implmentation. 
 
 ## Tip - Structuring your projects
 
