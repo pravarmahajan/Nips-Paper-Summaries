@@ -50,3 +50,14 @@ ___
   
   **To-do** to implement the paper:
    - Implement SR and MC-dropout confidence-rate functions, κf , and the induced rejection function, gθ(x|κf ) on trained models.
+   
+ ___
+  ### Learning multiple visual domains with residual adapters
+  **Link**: https://nurture.ai/p/10625bb6-46aa-4b03-aff4-c9b558852de0
+  
+  **Summary** : This paper proposes a residual neural net based network that can work well on multiple image domains all at the same time, i.e. without forgetting learning from previous domains (unlike just finetuning). Specifically, the paper discusses the architecture and performance for a new 'decathlon challenge' that contains images from (a) Aircraft, (b) CIFAR-100, (c) Daimler Pedestrians, (d) Describable Textures, (e) German Traffic Signs, (f) ILSVRC (ImageNet) 2012, (g) VGG-Flowers, (h) OmniGlot, (i) SVHN, (j) UCF101 Dynamic Images. The proposed architecture is a modification of Wide Residual Network Resnet28 - additional simplified residual blocks added to the network. The idea is that 90% of the learnt weights are shared for all the datasets and 10% parameters are specifc to each domain. 
+  
+  **To-do** to implement the paper: 
+   - Train WRN Resnet28 on the imagenet dataset to get baseline weights, then add the additional residual blocks to the network. 
+   - Train the new network on each of the 10 datasets and carry out evaluation for the decathlon challenge as explained in the paper. 
+   
