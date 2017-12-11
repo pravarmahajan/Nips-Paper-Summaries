@@ -1,6 +1,15 @@
 # README
 
-This repository contains the summaries of projects in this organisations.
+This repository contains the summaries of projects, and code implementation from NIPS 2017.
+It also has a few tips to use to make an awesome summary and implmentation. To 
+
+## Tip - Structuring your projects
+
+There is an awesome skeleton project structure for Machine Learning projects. You can find it here : https://drivendata.github.io/cookiecutter-data-science/ . It has an easy to understand strcture, and uses click library for command line arguments, which greatly simplifies the code , allowing readers to focus on what matters most. 
+
+To create an empty structure, all you have to do is run 
+
+`cookiecutter https://github.com/drivendata/cookiecutter-data-science`
 
 
 
