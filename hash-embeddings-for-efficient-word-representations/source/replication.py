@@ -104,7 +104,7 @@ train_docs2id = torch.LongTensor([d+[0]*(max_len-len(d)) for d in train_docs2id]
 train_targets = torch.LongTensor(np.asarray(train_targets, 'int32'))
 
 val_docs2id = input_dropout(val_docs2id)
-val_docs2id = torch.LongTensor([d+[0]*(max_len-len(d)) for d in val_docs2id])
+val_docs2id = torch.LongTensor([d+[0]*(max_len-len(d)) if max_len > len(d) else d[:max_len] for d in val_docs2id])
 val_targets = torch.LongTensor(np.asarray(val_targets, 'int32'))
 
 train_dataset = TensorDataset(train_docs2id, train_targets)
