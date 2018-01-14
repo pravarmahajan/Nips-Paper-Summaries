@@ -107,19 +107,23 @@ val_docs2id = input_dropout(val_docs2id)
 val_docs2id = torch.LongTensor([d+[0]*(max_len-len(d)) if max_len > len(d) else d[:max_len] for d in val_docs2id])
 val_targets = torch.LongTensor(np.asarray(val_targets, 'int32'))
 
+train_docs2id = train_docs2id % max_words
+val_docs2id = val_docs2id % max_words
+
+train_docs2id = train_docs2id.cuda() if use_cuda else train_docs2id
+#train_targets = train_targets.unsqueeze(-1)
+train_targets = train_targets.cuda() if use_cuda else train_targets
+
+val_docs2id = val_docs2id.cuda() if use_cuda else val_docs2id
+#val_targets = val_targets.unsqueeze(-1)
+val_targets = val_targets.cuda() if use_cuda else val_targets
+
 train_dataset = TensorDataset(train_docs2id, train_targets)
 val_dataset = TensorDataset(val_docs2id, val_targets)
 
 train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
-train_docs2id = train_docs2id.cuda() if use_cuda else train_docs2id
-train_targets = train_targets.unsqueeze(-1)
-train_targets = train_targets.cuda() if use_cuda else train_targets
-
-val_docs2id = val_docs2id.cuda() if use_cuda else val_docs2id
-val_targets = val_targets.unsqueeze(-1)
-val_targets = val_targets.cuda() if use_cuda else val_targets
 # In[7]:
 
 
@@ -145,9 +149,10 @@ class HashEmbedding(nn.Module):
     def forward(self, words_as_ids):
         embeddings = []
         pvals = []
+        #import ipdb; ipdb.set_trace()
         for i in range(self.num_hash_functions):
             hashes = torch.take(self.hash_table[:, i], words_as_ids)
-            embeddings.append(self.W[hashes, :]*self.P[hashes, :][:, :, i].unsqueeze(-1))
+            embeddings.append(self.W[hashes, :]*self.P[words_as_ids, :][:, :, i].unsqueeze(-1))
             pvals.append(self.P[hashes, :][:, :, i].unsqueeze(-1))
 
         cat_embeddings = torch.stack(embeddings, -1)
@@ -224,7 +229,7 @@ for _ in range(num_epochs):
     print("Epoch = {}".format(_))
     for (i, d) in bar(enumerate(train_dataloader)):
         data_point = d[0].cuda() if use_cuda else d[0]
-        t = Variable(torch.squeeze(d[1], -1))
+        t = Variable(d[1])
         t = t.cuda() if use_cuda else t
         output = model(data_point)
         loss = criterion(output, t)
