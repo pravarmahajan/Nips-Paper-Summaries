@@ -79,7 +79,7 @@ num_hash = 2
 num_buckets = 10**6
 embedding_dim = 20
 num_classes = 4
-num_hidden_units = 50
+num_hidden_units = 0
 learning_rate = 1e-3
 agg_function = torch.sum
 num_epochs = 10
@@ -90,10 +90,10 @@ use_cuda = torch.cuda.is_available()
 # In[6]:
 
 
-train_documents = [remove_punct(sample['text']) for sample in dl_obj.train_samples]
+train_documents = [remove_punct(sample['title'] + " " + sample['text']) for sample in dl_obj.train_samples]
 train_targets = [sample['class'] - 1 for sample in dl_obj.train_samples]
 
-val_documents = [remove_punct(sample['text']) for sample in dl_obj.valid_samples]
+val_documents = [remove_punct(sample['title'] + " " + sample['text']) for sample in dl_obj.valid_samples]
 val_targets = [sample['class'] - 1 for sample in dl_obj.valid_samples]
 
 bigram_dict, train_docs2id = bigram_vectorizer(train_documents)
@@ -168,27 +168,36 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.embedding_model = embedding_model
         self.num_classes = num_classes
-        self.dense_layer = nn.Linear(self.embedding_model.embedding_size+self.embedding_model.num_hash_functions,
-        #self.dense_layer = nn.Linear(self.embedding_model.embedding_size,
-                                     num_hidden_units)
-        self.output_layer = nn.Linear(num_hidden_units, num_classes)
+        if num_hidden_units > 0:
+            self.dense_layer = nn.Linear(self.embedding_model.embedding_size+self.embedding_model.num_hash_functions,
+                                         num_hidden_units)
+            self.output_layer = nn.Linear(num_hidden_units, num_classes)
 
-        self.dense_layer = self.dense_layer.cuda() if use_cuda else self.dense_layer
+            self.dense_layer = self.dense_layer.cuda() if use_cuda else self.dense_layer
+        else:
+            self.output_layer = nn.Linear(self.embedding_model.embedding_size+self.embedding_model.num_hash_functions,
+                                          num_classes)
+
         self.output_layer = self.output_layer.cuda() if use_cuda else self.output_layer
     
     def forward(self, words_as_ids):
         mask = Variable(torch.unsqueeze(1-torch.eq(words_as_ids, 0).float(), -1))
         embedded = torch.sum(self.embedding_model(words_as_ids)*mask, 1)
-        #import pdb; pdb.set_trace()
-        dense_output = F.relu(self.dense_layer(embedded))
-        final_output = self.output_layer(dense_output)
+
+        if num_hidden_units > 0:
+            dense_output = F.relu(self.dense_layer(embedded))
+            final_output = self.output_layer(dense_output)
+        else:
+            final_output = self.output_layer(embedded)
+
         final_output = final_output.cuda() if use_cuda else final_output
         return final_output
     
     def initializeWeights(self):
-        nn.init.xavier_uniform(self.dense_layer.weight)
+        if num_hidden_units > 0:
+            nn.init.xavier_uniform(self.dense_layer.weight)
+            model.dense_layer.bias.data.zero_()
         nn.init.xavier_uniform(self.output_layer.weight)
-        model.dense_layer.bias.data.zero_()
         model.output_layer.bias.data.zero_()
 
 
@@ -216,10 +225,9 @@ criterion = criterion.cuda() if use_cuda else criterion
 optimizer = torch.optim.Adam(list(model.parameters())+list(embedding_model.parameters()),
                              lr=learning_rate)
 
+optimizer = torch.optim.Adam(list(model.parameters())+list(embedding_model.parameters()),
+                             lr=learning_rate)
 for _ in range(num_epochs):
-    optimizer = torch.optim.Adam(list(model.parameters())+list(embedding_model.parameters()),
-                                 lr=learning_rate)
-    learning_rate = learning_rate*0.5
     bar = progressbar.ProgressBar()
     print("Epoch = {}".format(_))
     for (i, d) in bar(enumerate(train_dataloader)):
