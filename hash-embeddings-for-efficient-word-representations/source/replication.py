@@ -17,8 +17,7 @@ import string
 import dataloader
 import random
 import progressbar
-
-
+import re
 # In[2]:
 
 
@@ -28,10 +27,10 @@ dl_obj.load_data()
 
 # In[3]:
 
+punct_patt = re.compile('[%s]' %re.escape(string.punctuation))
 
 def remove_punct(in_string):
-    return ''.join([ch.lower() if ch not in string.punctuation else ' ' for ch in in_string])
-
+    return re.sub(punct_patt, ' ', in_string)
 
 def bigram_vectorizer(documents):
     docs2id = [None]*len(documents)
@@ -79,7 +78,6 @@ use_cuda = torch.cuda.is_available()
 
 # In[6]:
 
-
 train_documents = [remove_punct(sample['title'] + " " + sample['text']) for sample in dl_obj.train_samples]
 train_targets = [sample['class'] - 1 for sample in dl_obj.train_samples]
 num_classes = max(train_targets)+1
@@ -90,9 +88,13 @@ val_targets = [sample['class'] - 1 for sample in dl_obj.valid_samples]
 test_documents = [remove_punct(sample['title'] + " " + sample['text']) for sample in dl_obj.test_samples]
 test_targets = [sample['class'] - 1 for sample in dl_obj.test_samples]
 
+print("Done with loading")
+
 train_docs2id = bigram_vectorizer(train_documents)
 val_docs2id = bigram_vectorizer(val_documents)
 test_docs2id = bigram_vectorizer(test_documents)
+
+print("Vectorized")
 
 train_docs2id = input_dropout(train_docs2id)
 train_docs2id = torch.LongTensor([d+[0]*(max_len-len(d)) for d in train_docs2id])
@@ -161,6 +163,20 @@ class HashEmbedding(nn.Module):
         nn.init.normal(self.W, 0, 0.1)
         nn.init.normal(self.P, 0, 0.0005)
         
+class StandardEmbedding(nn.Module):
+    
+    def __init__(self, num_words, embedding_size):
+        super(StandardEmbedding, self).__init__()
+        self.embedding_size = embedding_size
+        self.num_hash_functions = 0
+        self.embeddings = nn.Embedding(num_words, embedding_size)
+    
+    def forward(self, words_as_ids):
+        return self.embeddings(words_as_ids)
+    
+    def initializeWeights(self):
+        nn.init.xavier_uniform(self.embeddings.weight)
+
 class Model(nn.Module):
     
     def __init__(self, embedding_model, num_classes, num_hidden_units):
@@ -180,7 +196,7 @@ class Model(nn.Module):
         self.output_layer = self.output_layer.cuda() if use_cuda else self.output_layer
     
     def forward(self, words_as_ids):
-        mask = Variable(torch.unsqueeze(1-torch.eq(words_as_ids, 0).float(), -1))
+        mask = torch.unsqueeze(1-torch.eq(words_as_ids, 0).float(), -1)
         embedded = torch.sum(self.embedding_model(words_as_ids)*mask, 1)
 
         if num_hidden_units > 0:
@@ -203,7 +219,8 @@ class Model(nn.Module):
 # In[8]:
 
 
-embedding_model = HashEmbedding(max_words, num_hash, num_buckets, embedding_dim, agg_function)
+#embedding_model = HashEmbedding(max_words, num_hash, num_buckets, embedding_dim, agg_function)
+embedding_model = StandardEmbedding(max_words, embedding_dim)
 embedding_model = embedding_model.cuda() if use_cuda else embedding_model
 embedding_model.initializeWeights()
 
@@ -232,7 +249,7 @@ for _ in range(num_epochs):
     for (i, d) in bar(enumerate(train_dataloader)):
         t = Variable(d[1])
         t = t.cuda() if use_cuda else t
-        output = model(d[0])
+        output = model(Variable(d[0]))
         loss = criterion(output, t)
         optimizer.zero_grad()
         loss.backward()
@@ -241,14 +258,14 @@ for _ in range(num_epochs):
     total = 0
     for (i, d) in enumerate(val_dataloader):
         t = d[1].cuda() if use_cuda else d[1]
-        pred = model(d[0]).max(1)[1].data
+        pred = model(Variable(d[0])).max(1)[1].data
         correct = correct + (pred==t).sum()
         total += pred.size(0)
     print("Accuracy = {:.2f}".format(correct*100/total))
 
 for (i, d) in enumerate(test_dataloader):
     t = d[1].cuda() if use_cuda else d[1]
-    pred = model(d[0]).max(1)[1].data
+    pred = model(Variable(d[0])).max(1)[1].data
     correct = correct + (pred==t).sum()
     total += pred.size(0)
 print("Accuracy = {:.2f}".format(correct*100/total))
