@@ -18,6 +18,7 @@ import dataloader
 import random
 import progressbar
 import re
+import cProfile, io, pstats
 # In[2]:
 
 
@@ -36,11 +37,7 @@ def bigram_vectorizer(documents):
     docs2id = [None]*len(documents)
     for (i, document) in enumerate(documents):
         tokens = document.split(' ')
-        docs2id[i] = [None]*(len(tokens)-1)
-        for j in range(len(tokens)-1):
-            key = tokens[j]+"_"+tokens[j+1]
-            idx = word_encoder(key, max_words)
-            docs2id[i][j] = idx
+        docs2id[i] = list([word_encoder(tokens[j]+"_"+tokens[j+1], max_words) for j in range(len(tokens)-1)])
     return docs2id
 
 
@@ -48,8 +45,8 @@ def bigram_vectorizer(documents):
 
 
 def word_encoder(w, max_idx):
-    # v = hash(w) #
-    v = int(hashlib.sha1(w.encode('utf-8')).hexdigest(), 16)
+    v = hash(w) 
+    #v = int(hashlib.sha1(w.encode('utf-8')).hexdigest(), 16)
     return (v % (max_idx-1)) + 1
 
 def input_dropout(docs_as_ids, min_len=4, max_len=100):
@@ -89,6 +86,7 @@ test_documents = [remove_punct(sample['title'] + " " + sample['text']) for sampl
 test_targets = [sample['class'] - 1 for sample in dl_obj.test_samples]
 
 print("Done with loading")
+
 
 train_docs2id = bigram_vectorizer(train_documents)
 val_docs2id = bigram_vectorizer(val_documents)
