@@ -62,7 +62,7 @@ class UniversalArticleDatasetProvider:
         self.source_url_test = 'http://www.intellifind.dk/datasets/%s' % self.pickle_file_name_test
         self.valid_fraction = valid_fraction
 
-        self.environment = {'config': {'data': {'data_dir': '../data/'}}}
+        self.environment = {'config': {'data': {'data_dir': '../data/preprocessed/'}}}
 
     def raw_train_samples_gen(self):
         """
