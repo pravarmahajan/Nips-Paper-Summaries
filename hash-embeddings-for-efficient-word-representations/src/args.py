@@ -1,7 +1,12 @@
 import argparse
 
 def parse_arguments():
+    choices = ["agnews", "dbpedia", "yelp_pol", "yelp_full", "yahoo",
+               "amazon_full", "amazon_pol"]
+
     parser = argparse.ArgumentParser(add_help=False)
+
+    parser.add_argument("-ds", "--dataset", choices=choices, default="agnews")
     parser.add_argument("-K", "--vocab_size", help="size of the vocabulary",
                         type=int, default=10**7)
     parser.add_argument("-k", "--num_hash", help="number of hash functions",
@@ -19,6 +24,10 @@ def parse_arguments():
     parser.add_argument("-b", "--batch_size", help="size of a minibatch",
                         type=int, default=1024)
     parser.add_argument("-g", "--use_gpu", help="use gpu?",
-                        type=bool, default=True)
+                       action = "store_true")
+    parser.add_argument("-emb", "--embedding_type", choices=["std", "hash"],
+                        default="hash")
     args = parser.parse_args()
+
+    args.hidden = list([int(h) for h in args.hidden])
     return args

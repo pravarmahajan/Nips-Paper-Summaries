@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+import torch.nn.functional as F
+
 import numpy as np
 
 class StandardEmbedding(nn.Module):
@@ -62,16 +64,13 @@ class ClassifierModel(nn.Module):
         self.num_classes = num_classes
         self.num_hidden_units = num_hidden_units
         if sum(num_hidden_units) > 0:
-            self.dense_layer = nn.ModuleList([
-                nn.Linear(self.embedding_model.embedding_size + \
-                          self.embedding_model.num_hash_functions,
-                          h) for h in num_hidden_units])
+            layer0 = nn.Linear(self.embedding_model.embedding_size + self.embedding_model.num_hash_functions, num_hidden_units[0])
+            self.dense_layer = nn.ModuleList(
+                [layer0] + [nn.Linear(num_hidden_units[i], num_hidden_units[i+1]) for i in range(len(num_hidden_units)-1)])
             self.output_layer = nn.Linear(num_hidden_units[-1], num_classes)
-
             self.dense_layer = self.dense_layer.cuda() if use_cuda else self.dense_layer
         else:
-            self.output_layer = nn.Linear(self.embedding_model.embedding_size+self.embedding_model.num_hash_functions,
-                                          num_classes)
+            self.output_layer = nn.Linear(self.embedding_model.embedding_size+self.embedding_model.num_hash_functions, num_classes)
             self.dense_layer = None
 
         self.output_layer = self.output_layer.cuda() if use_cuda else self.output_layer
@@ -83,7 +82,7 @@ class ClassifierModel(nn.Module):
         if self.dense_layer is not None:
             dense_output = embedded
             for layer in self.dense_layer:
-                dense_output = F.relu(self.dense_layer(dense_output))
+                dense_output = F.relu(layer(dense_output))
             final_output = self.output_layer(dense_output)
         else:
             final_output = self.output_layer(embedded)
@@ -93,7 +92,7 @@ class ClassifierModel(nn.Module):
     def initializeWeights(self):
         if self.dense_layer is not None:
             for layer in self.dense_layer:
-                nn.init.xavier_uniform(self.layer.weight)
-                model.layer.bias.data.zero_()
+                nn.init.xavier_uniform(layer.weight)
+                layer.bias.data.zero_()
         nn.init.xavier_uniform(self.output_layer.weight)
         self.output_layer.bias.data.zero_()
