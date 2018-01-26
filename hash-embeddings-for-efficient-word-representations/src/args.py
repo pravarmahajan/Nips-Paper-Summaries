@@ -27,6 +27,7 @@ def parse_arguments():
                        action = "store_true")
     parser.add_argument("-emb", "--embedding_type", choices=["std", "hash"],
                         default="hash")
+    parser.add_argument("-dict", "--with_dict", action = "store_true")
     args = parser.parse_args()
 
     args.hidden = list([int(h) for h in args.hidden])

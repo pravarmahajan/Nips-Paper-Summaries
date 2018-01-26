@@ -11,14 +11,13 @@ Xiang Zhang, Junbo Zhao, Yann LeCun
 """
 
 class UniversalArticleDatasetProvider:
-    AG_NEWS = 1
-    AMAZON_REVIEW_FULL = 2
-    AMAZON_REVIEW_POLARITY = 3
-    DBPEDIA = 4
-    SOGOU_NEWS = 5
-    YAHOO_ANSWERS = 6
-    YELP_REVIEW_FULL = 7
-    YELP_REVIEW_POLARITY = 8
+    AG_NEWS = "agnews"
+    AMAZON_REVIEW_FULL = "amazon_full"
+    AMAZON_REVIEW_POLARITY = "amazon_review"
+    DBPEDIA = "dbpedia"
+    YAHOO_ANSWERS = "yahoo"
+    YELP_REVIEW_FULL = "yelp_full"
+    YELP_REVIEW_POLARITY = "yelp_pol"
 
     def __init__(self, dataset, valid_fraction = 0.05):
         """ The datasets are split into train set and test set.
@@ -40,9 +39,6 @@ class UniversalArticleDatasetProvider:
         if dataset == self.DBPEDIA:
             pickle_train = 'dbpedia_csv_train.pkl'
             pickle_test = 'dbpedia_csv_test.pkl'
-        if dataset == self.SOGOU_NEWS:
-            pickle_train = 'sogou_news_csv_train.pkl'
-            pickle_test = 'sogou_news_csv_test.pkl'
         if dataset == self.YAHOO_ANSWERS:
             pickle_train = 'yahoo_answers_csv_train.pkl'
             pickle_test = 'yahoo_answers_csv_test.pkl'
@@ -136,13 +132,19 @@ class UniversalArticleDatasetProvider:
         self.test_samples = pickle.load(open(filename_test, 'rb'))
 
         count = 0
+        classes = set()
+
         for s in self.train_samples:
             s['class_'] = s['class']
+            classes.add(s['class_'])
             count += 1
         for s in self.test_samples:
             s['class_'] = s['class']
 
         print('Num samples: %i' %count)
+        print('Num classes: %i' %len(classes))
+
+        self.num_classes = len(classes)
 
         np.random.seed(1)
         np.random.shuffle(self.train_samples)
@@ -157,4 +159,3 @@ class UniversalArticleDatasetProvider:
 
         self.environment['num_validation_samples'] = len(self.valid_samples)
         self.environment['num_test_samples'] = len(self.test_samples)
-
