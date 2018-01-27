@@ -8,8 +8,14 @@ import time
 
 import progressbar
 
-name = "ag_news"
-n = 10
+#name, n = "ag_news", 10
+name, n = "amazon_review_full", 5
+#name, n = "amazon_review_polarity", 10
+#name, n = "dbpedia", 10
+#name, n = "yahoo_answers", 10
+#name, n = "yelp_review_full", 10
+#name, n = "yelp_review_polarity", 10
+
 data = pickle.load(open('../data/preprocessed/{}_csv_train.pkl'.format(name), 'rb'))
 ngrams = defaultdict(int)
 punct_patt = re.compile('[%s]' %re.escape(string.punctuation))
@@ -22,9 +28,14 @@ data_cleaned = [None]*len(data)
 print("train length: {}".format(len(data)))
 
 def get_line(d):
-    line = d['text'] + " " + d['title']
-    #line = d['text']
-    #line = d['question'] + " " + d['answer'] + " " + d['title']
+    if 'text' in d:
+        if 'title' in d:
+            line = d['text'] + " " + d['title']
+        else:
+            line = d['text']
+    else:
+        line = d['question'] + " " + d['answer'] + " " + d['title']
+
     return line
 
 for i, d in bar(enumerate(data)):

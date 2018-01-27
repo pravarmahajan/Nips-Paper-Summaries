@@ -21,14 +21,15 @@ def main():
     agg_function = torch.sum
     use_cuda = parsed_args.use_gpu and torch.cuda.is_available()
     max_len = 150
+    val_frac = 0.05
 
     if not parsed_args.with_dict:
-        dl_obj = dataloader.UniversalArticleDatasetProvider(parsed_args.dataset, valid_fraction=0.05)
+        dl_obj = dataloader.UniversalArticleDatasetProvider(parsed_args.dataset, valid_fraction=val_frac)
         dl_obj.load_data()
-        train_dataloader, val_dataloader, test_dataloader = dataset.create_dataset_nodict(dl_obj, parsed_args.vocab_size, parsed_args.batch_size, use_cuda, max_len)
+        train_dataloader, val_dataloader, test_dataloader = dataset.create_dataset_nodict(dl_obj, parsed_args.batch_size, use_cuda, max_len)
         num_classes = dl_obj.num_classes
     else:
-        train_dataloader, val_dataloader, test_dataloader, num_classes = dataset.create_dataset_wdict(parsed_args.dataset, parsed_args.vocab_size, parsed_args.batch_size, use_cuda, max_len)
+        train_dataloader, val_dataloader, test_dataloader, num_classes = dataset.create_dataset_wdict(parsed_args.dataset, val_frac, parsed_args.batch_size, use_cuda, max_len)
 
     if parsed_args.embedding_type == "hash":
         embedding_model = HashEmbedding(parsed_args.vocab_size, parsed_args.num_hash, parsed_args.bucket, parsed_args.embedding, agg_function, use_cuda)
