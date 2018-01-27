@@ -10,6 +10,7 @@ Character-level Convolutional Networks for Text Classification
 Xiang Zhang, Junbo Zhao, Yann LeCun
 """
 
+
 class UniversalArticleDatasetProvider:
     AG_NEWS = "agnews"
     AMAZON_REVIEW_FULL = "amazon_full"
@@ -19,7 +20,7 @@ class UniversalArticleDatasetProvider:
     YELP_REVIEW_FULL = "yelp_full"
     YELP_REVIEW_POLARITY = "yelp_pol"
 
-    def __init__(self, dataset, valid_fraction = 0.05):
+    def __init__(self, dataset, valid_fraction=0.05):
         """ The datasets are split into train set and test set.
         Pickle train takes the path to the pickled train set file.
         Pickle test takes the path to the pickled test set file.
@@ -58,51 +59,8 @@ class UniversalArticleDatasetProvider:
         self.source_url_test = 'http://www.intellifind.dk/datasets/%s' % self.pickle_file_name_test
         self.valid_fraction = valid_fraction
 
-        self.environment = {'config': {'data': {'data_dir': './data/preprocessed/'}}}
-
-    def raw_train_samples_gen(self):
-        """
-        There are some changes to dictionaries depending on the dataset used so be careful!
-        For exmaple:
-        yahoo_answers_csv_train.pkl: {'answer':str, 'class':int, 'question':str, 'title': str}
-        yelp_reviews_full_csv_train.pkl: {'class':int, 'text': str}
-        yelp_reviews_polarity_csv_train.pkl: {'class':int, 'text': str}
-        All others:
-        *_train.pkl: {'class':int, 'text':str, 'title':str}
-        """
-
-        for single_dict in self.train_samples:
-            yield deepcopy(single_dict)
-
-    def raw_valid_samples_gen(self):
-        """
-        There are some changes to dictionaries depending on the dataset used so be careful!
-        For exmaple:
-        yahoo_answers_csv_train.pkl: {'answer':str, 'class':int, 'question':str, 'title': str}
-        yelp_reviews_full_csv_train.pkl: {'class':int, 'text': str}
-        yelp_reviews_polarity_csv_train.pkl: {'class':int, 'text': str}
-        All others:
-        *_train.pkl: {'class':int, 'text':str, 'title':str}
-        """
-
-        for single_dict in self.valid_samples:
-            yield deepcopy(single_dict)
-
-    def raw_test_samples_gen(self):
-        """
-        There are some changes to dictionaries depending on the dataset used so be careful!
-        For exmaple:
-        yahoo_answers_csv_test.pkl: {'answer':str, 'class':int, 'question':str, 'title': str}
-        yelp_reviews_full_csv_test.pkl: {'class':int, 'text': str}
-        yelp_reviews_polarity_csv_test.pkl: {'class':int, 'text': str}
-        All others:
-        *_test.pkl: {'class':int, 'text':str, 'title':str}
-        """
-
-        for single_dict in self.test_samples:
-            yield deepcopy(single_dict)
-
-
+        self.environment = {'config': {
+            'data': {'data_dir': './data/preprocessed/'}}}
 
     def prepare(self):
         data_dir = self.environment['config']['data']['data_dir']
@@ -110,23 +68,25 @@ class UniversalArticleDatasetProvider:
         corpus_file_test = os.path.join(data_dir, self.pickle_file_name_test)
 
         if not os.path.exists(data_dir):
-            print('creating data directory: %s' % self.environment['config']['data']['data_dir'])
+            print('creating data directory: %s' %
+                  self.environment['config']['data']['data_dir'])
             os.makedirs(data_dir)
         if not os.path.isfile(corpus_file_train):
             print('Downloading training data (~X MB)')
-            urllib.request.urlretrieve(self.source_url_train, corpus_file_train)
-            print ('Data dowload complete')
+            urllib.request.urlretrieve(
+                self.source_url_train, corpus_file_train)
+            print('Data dowload complete')
         if not os.path.isfile(corpus_file_test):
             print('Downloading test data (~X MB)')
             urllib.request.urlretrieve(self.source_url_test, corpus_file_test)
-            print ('Data download complete')
+            print('Data download complete')
 
     def load_data(self):
         filename_train = os.path.join(self.environment['config']['data']['data_dir'],
                                       self.pickle_file_name_train)
 
         filename_test = os.path.join(self.environment['config']['data']['data_dir'],
-                                      self.pickle_file_name_test)
+                                     self.pickle_file_name_test)
 
         self.train_samples = pickle.load(open(filename_train, 'rb'))
         self.test_samples = pickle.load(open(filename_test, 'rb'))
@@ -141,8 +101,8 @@ class UniversalArticleDatasetProvider:
         for s in self.test_samples:
             s['class_'] = s['class']
 
-        print('Num samples: %i' %count)
-        print('Num classes: %i' %len(classes))
+        print('Num samples: %i' % count)
+        print('Num classes: %i' % len(classes))
 
         self.num_classes = len(classes)
 
