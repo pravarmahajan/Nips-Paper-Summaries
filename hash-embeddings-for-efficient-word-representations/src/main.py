@@ -1,3 +1,11 @@
+"""
+This is the main script for replication of the results of the paper 
+"Hash Embeddings for Efficient Word Representations", a NIPS 2017 paper.
+The best way to run this script is via 'run.sh' provided in the parent
+directory, otherwise path references need to be fixed.
+Usage:
+    >>> python main.py
+"""
 import progressbar
 import torch
 import torch.nn as nn

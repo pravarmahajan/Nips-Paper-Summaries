@@ -5,7 +5,7 @@ def parse_arguments():
     choices = ["agnews", "dbpedia", "yelp_pol", "yelp_full", "yahoo",
                "amazon_full", "amazon_pol"]
 
-    parser = argparse.ArgumentParser(add_help=False)
+    parser = argparse.ArgumentParser(add_help=True)
 
     parser.add_argument("-ds", "--dataset", choices=choices, default="agnews")
     parser.add_argument("-K", "--vocab_size", help="size of the vocabulary",

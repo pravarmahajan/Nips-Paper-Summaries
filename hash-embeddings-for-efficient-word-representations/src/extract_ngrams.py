@@ -10,7 +10,7 @@ import progressbar
 
 #name, n = "ag_news", 10
 #name, n = "amazon_review_full", 5
-name, n = "amazon_review_polarity", 5
+name, n = "amazon_review_polarity", 4
 #name, n = "dbpedia", 10
 #name, n = "yahoo_answers", 10
 #name, n = "yelp_review_full", 10
