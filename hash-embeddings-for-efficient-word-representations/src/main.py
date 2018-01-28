@@ -3,9 +3,38 @@ This is the main script for replication of the results of the paper
 "Hash Embeddings for Efficient Word Representations", a NIPS 2017 paper.
 The best way to run this script is via 'run.sh' provided in the parent
 directory, otherwise path references need to be fixed.
-Usage:
-    >>> python main.py
+
+usage: python main.py [-h]
+               [-ds {agnews,dbpedia,yelp_pol,yelp_full,yahoo,amazon_full,amazon_pol}]
+               [-K VOCAB_SIZE] [-k NUM_HASH] [-B BUCKET] [-d EMBEDDING]
+               [-hi [HIDDEN [HIDDEN ...]]] [-lr LEARNING_RATE] [-e NUM_EPOCHS]
+               [-b BATCH_SIZE] [-g] [-emb {std,hash}] [-dict]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -ds {agnews,dbpedia,yelp_pol,yelp_full,yahoo,amazon_full,amazon_pol},
+      --dataset {agnews,dbpedia,yelp_pol,yelp_full,yahoo,amazon_full,amazon_pol}
+  -K VOCAB_SIZE, --vocab_size VOCAB_SIZE
+                        size of the vocabulary
+  -k NUM_HASH, --num_hash NUM_HASH
+                        number of hash functions
+  -B BUCKET, --bucket BUCKET
+                        number of embedding buckets
+  -d EMBEDDING, --embedding EMBEDDING
+                        embedding vector size
+  -H [HIDDEN [HIDDEN ...]], --hidden [HIDDEN [HIDDEN ...]]
+                        number of hidden units
+  -lr LEARNING_RATE, --learning_rate LEARNING_RATE
+                        learning rate
+  -e NUM_EPOCHS, --num_epochs NUM_EPOCHS
+                        number of epochs
+  -b BATCH_SIZE, --batch_size BATCH_SIZE
+                        size of a minibatch
+  -g, --use_gpu         use gpu?
+  -emb {std,hash}, --embedding_type {std,hash}
+  -dict, --with_dict
 """
+
 import progressbar
 import torch
 import torch.nn as nn
@@ -19,12 +48,20 @@ from models import HashEmbedding, StandardEmbedding, ClassifierModel
 
 
 def main():
+    """
+    The main function
+    - load the dataset
+    - create the embedding model
+    - train the classifier model on the dataset based on
+      the type of embedding model
+    """
     parsed_args = args.parse_arguments()
     agg_function = torch.sum
     use_cuda = parsed_args.use_gpu and torch.cuda.is_available()
-    max_len = 150
-    val_frac = 0.05
+    max_len = 150 # All the documents will be clipped/zero padded to this length
+    val_frac = 0.05 # Validation fraction
 
+    """Loading dataset"""
     if not parsed_args.with_dict:
         dl_obj = dataloader.UniversalArticleDatasetProvider(
             parsed_args.dataset, valid_fraction=val_frac)
@@ -36,6 +73,7 @@ def main():
         train_dataloader, val_dataloader, test_dataloader, num_classes = dataset.create_dataset_wdict(
             parsed_args.dataset, val_frac, parsed_args.batch_size, use_cuda, max_len)
 
+    """Creating the embedding model"""
     if parsed_args.embedding_type == "hash":
         embedding_model = HashEmbedding(parsed_args.vocab_size, parsed_args.num_hash,
                                         parsed_args.bucket, parsed_args.embedding, agg_function, use_cuda)
@@ -55,6 +93,8 @@ def main():
     criterion = criterion.cuda() if use_cuda else criterion
 
     prev_loss = float("inf")
+
+    """Train the classification model"""
     for _ in range(parsed_args.num_epochs):
         bar = progressbar.ProgressBar()
         print("Epoch = {}".format(_))
@@ -84,7 +124,9 @@ def main():
         loss = loss[0].data[0]
         print("Val accuracy = {:.2f}".format(correct*100/total))
         print("Val loss = {:.2f}".format(loss))
-        if prev_loss < loss:
+
+        if prev_loss < loss: # If current loss is more than prev loss, then we stop further training
+                             # and take the last state of the model as our trained model.
             print("Early Stopping")
             model = prev_model
             break
@@ -97,7 +139,7 @@ def main():
         pred = model(d[0]).max(1)[1].data
         correct = correct + (pred == t).sum()
         total += pred.size(0)
-    print("Accuracy = {:.2f}".format(correct*100/total))
+    print("Test Accuracy = {:.2f}".format(correct*100/total))
 
 
 main()

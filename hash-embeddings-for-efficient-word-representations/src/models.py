@@ -1,3 +1,9 @@
+"""
+Defines the following models:
+- Standard Embedding
+- Hash Embedding
+- Classifier
+"""
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
@@ -6,8 +12,19 @@ import torch.nn.functional as F
 import numpy as np
 
 class StandardEmbedding(nn.Module):
+    """
+    Standard Embedding Model.
+    A simple wrapper around PyTorch's Embedding module.
+    """
     
     def __init__(self, num_words, embedding_size, use_cuda):
+        """
+        Constructor for Embedding model.
+        Arguments:
+        num_words - number of words to be embedded (vocabulary size)
+        embedding_size - dimension of the embedding vector
+        use_cuda - true if the embedding layer should reside on cuda
+        """
         super(StandardEmbedding, self).__init__()
         self.embedding_size = embedding_size
         self.num_hash_functions = 0
@@ -21,8 +38,27 @@ class StandardEmbedding(nn.Module):
         nn.init.xavier_uniform(self.embeddings.weight)
 
 class HashEmbedding(nn.Module):
-    
+    """
+    Hash Embedding Model.
+    """
+
     def __init__(self, num_words, num_hash_functions, num_buckets, embedding_size, agg_function, use_cuda):
+        """
+        Constructor.
+        - Define a hash table which has `num_hash_functions` entries for each word.
+        - Define an embedding matrix with embedding vector for each bucket
+        - Define a weight matrix corresponding to the weights of each bucket on each
+          hash function
+
+        Arguments:
+        num_words: Number of words (vocabularize size)
+        num_hash_functions: Number of hash functions
+        num_buckets: Number of embedding vector buckets
+        embedding_size: Size of embedding vector
+        agg_function: Function to aggregate different embedding vectors corresponding
+          to each word. We are using torch.sum. Other options are concat, average, etc
+        use_cuda: store the tensor in gpu or not.
+        """
         super(HashEmbedding, self).__init__()
         self.num_words = num_words # K
         self.num_hash_functions = num_hash_functions # k
@@ -38,6 +74,17 @@ class HashEmbedding(nn.Module):
 
     
     def forward(self, words_as_ids):
+        """
+        Compute the embeddings corresponding to a document, given words as a bag
+        of word ids.
+
+        - Select appropriate hash functions from `self.hash_table`
+        - Gather the embedding vectors corresponding to the hash functions
+        - Weigh the embedding vectors using the `self.P` table
+        - Aggregate the embeddings for each word
+        - Concatenate the embeddings of all words together to produce
+          a document embedding.
+        """
         embeddings = []
         pvals = []
 
@@ -57,8 +104,21 @@ class HashEmbedding(nn.Module):
         nn.init.normal(self.P, 0, 0.0005)
 
 class ClassifierModel(nn.Module):
+    """
+    Classification model.
+    Compute embeddings corresponding to a document, aggregate them and optionally
+    pass them through one or more hidden layers. Finally, run a softmax classification
+    on the embedded (or hidden) representation of the document.
+    """
     
     def __init__(self, embedding_model, num_classes, num_hidden_units, use_cuda):
+        """
+        Arguments:
+        embedding_model: An object of type HashEmbedding or StandardEmbedding
+        num_classes: Number of classes, this will be the number of neurons in the softmax layer
+        num_hidden_units: A list of numbers corresponding to the number of hidden units in each
+          layer. [0] or an empty list corresponds to no hidden layers.
+        """
         super(ClassifierModel, self).__init__()
         self.embedding_model = embedding_model
         self.num_classes = num_classes
@@ -76,6 +136,9 @@ class ClassifierModel(nn.Module):
         self.output_layer = self.output_layer.cuda() if use_cuda else self.output_layer
     
     def forward(self, words_as_ids):
+        """
+        Apply the dense and output layers on document embeddings
+        """
         mask = Variable(torch.unsqueeze(1-torch.eq(words_as_ids, 0).float(), -1))
         embedded = torch.sum(self.embedding_model(words_as_ids)*mask, 1)
 

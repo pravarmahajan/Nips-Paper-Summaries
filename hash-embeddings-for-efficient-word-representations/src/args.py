@@ -1,3 +1,6 @@
+"""
+    A simple wrapper function around the argument parser
+"""
 import argparse
 
 
@@ -16,7 +19,7 @@ def parse_arguments():
                         type=int, default=10**6)
     parser.add_argument("-d", "--embedding", help="embedding vector size",
                         type=int, default=20)
-    parser.add_argument("-h", "--hidden", help="number of hidden units",
+    parser.add_argument("-H", "--hidden", help="number of hidden units",
                         nargs="*", default=[0])
     parser.add_argument("-lr", "--learning_rate", help="learning rate",
                         type=float, default=0.001)

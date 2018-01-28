@@ -1,3 +1,9 @@
+"""
+Standalone script provided to generate top 1M n-grams corresponding to 
+each document. The train and test documents are converted to bag of these
+n-grams. Successfully created ngrams are stored as pickle objects in 
+data/ngrams
+"""
 import re
 import operator
 import string
@@ -8,13 +14,13 @@ import time
 
 import progressbar
 
-#name, n = "ag_news", 10
+name, n = "ag_news", 10
 #name, n = "amazon_review_full", 5
-name, n = "amazon_review_polarity", 4
+#name, n = "amazon_review_polarity", 4
 #name, n = "dbpedia", 10
-#name, n = "yahoo_answers", 10
-#name, n = "yelp_review_full", 10
-#name, n = "yelp_review_polarity", 10
+#name, n = "yahoo_answers", 6
+#name, n = "yelp_review_full", 6
+#name, n = "yelp_review_polarity", 6
 
 data = pickle.load(
     open('../data/preprocessed/{}_csv_train.pkl'.format(name), 'rb'))

@@ -1,3 +1,11 @@
+"""
+Preprocess documents and create dataloader objects which can be used while training
+Following preprocessing is performed:
+- Remove all punctuations, as defined by string.punctuation, and substitute
+    them by space.
+- input dropout: randomly select consecutive bigrams between size 4 and 100.
+- to compute word ids, we simply compute the hash() of each word
+"""
 import os
 import re
 import string
@@ -8,14 +16,19 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 
+"""regex defined to identify punctuations"""
 punct_pattern = re.compile('[%s]' % re.escape(string.punctuation))
 
 
 def remove_punct(in_string):
+    """Use regex to remove punctuations and substitute
+    them with spaces."""
     return re.sub(punct_pattern, ' ', in_string)
 
 
 def bigram_vectorizer(documents, vocab_size):
+    """Generates bigrams for each document and then encodes
+    the using the word_encoder function"""
     docs2id = [None]*len(documents)
     for (i, document) in enumerate(documents):
         tokens = document.split(' ')
@@ -25,11 +38,14 @@ def bigram_vectorizer(documents, vocab_size):
 
 
 def word_encoder(w, vocab_size):
+    """Computes a hash value for each word and bounds them
+    between 1 and vocab_size"""
     v = hash(w)
     return (v % (vocab_size-1)) + 1
 
 
 def input_dropout(docs_as_ids, min_len=4, max_len=100):
+    """Performs input dropout, as described in section 5.1 of the paper"""
     dropped_input = [None]*len(docs_as_ids)
     for i, doc in enumerate(docs_as_ids):
         random_len = random.randrange(min_len, max_len+1)
@@ -39,6 +55,7 @@ def input_dropout(docs_as_ids, min_len=4, max_len=100):
 
 
 def create_dataset_nodict(dl_obj, vocab_size, batch_size, use_cuda, max_len):
+    """Create dataset without using dictionary (section 5.3)"""
     train_documents = [remove_punct(
         sample['title'] + " " + sample['text']) for sample in dl_obj.train_samples]
     train_targets = [sample['class'] - 1 for sample in dl_obj.train_samples]
@@ -70,6 +87,7 @@ def create_dataset_nodict(dl_obj, vocab_size, batch_size, use_cuda, max_len):
 
 
 def create_dataset_wdict(dataset, val_frac, batch_size, use_cuda, max_len):
+    """Create dataset using a precomputed dictionary of n-grams (Section 5.4)"""
     if dataset == "agnews":
         pickle_train = 'ag_news_csv_train.pkl'
         pickle_test = 'ag_news_csv_test.pkl'
@@ -122,6 +140,7 @@ def create_dataset_wdict(dataset, val_frac, batch_size, use_cuda, max_len):
 
 
 def create_dataloader(docs2id, targets, max_len, batch_size, use_cuda=False, dropout=False, shuffle=False):
+    """A wrapper function to generate dataloader objects"""
     if dropout:
         docs2id = input_dropout(docs2id)
 
