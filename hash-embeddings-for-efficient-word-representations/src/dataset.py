@@ -23,7 +23,7 @@ punct_pattern = re.compile('[%s]' % re.escape(string.punctuation))
 def remove_punct(in_string):
     """Use regex to remove punctuations and substitute
     them with spaces."""
-    return re.sub(punct_pattern, ' ', in_string)
+    return re.sub(punct_pattern, ' ', in_string.lower())
 
 
 def bigram_vectorizer(documents, vocab_size):
@@ -54,18 +54,26 @@ def input_dropout(docs_as_ids, min_len=4, max_len=100):
     return dropped_input
 
 
+def get_line(d):
+    if 'text' in d:
+        if 'title' in d:
+            line = d['text'] + " " + d['title']
+        else:
+            line = d['text']
+    else:
+        line = d['question'] + " " + d['answer'] + " " + d['title']
+
+    return line
+
 def create_dataset_nodict(dl_obj, vocab_size, batch_size, use_cuda, max_len):
     """Create dataset without using dictionary (section 5.3)"""
-    train_documents = [remove_punct(
-        sample['title'] + " " + sample['text']) for sample in dl_obj.train_samples]
+    train_documents = [remove_punct(get_line(sample)) for sample in dl_obj.train_samples]
     train_targets = [sample['class'] - 1 for sample in dl_obj.train_samples]
 
-    val_documents = [remove_punct(
-        sample['title'] + " " + sample['text']) for sample in dl_obj.valid_samples]
+    val_documents = [remove_punct(get_line(sample)) for sample in dl_obj.valid_samples]
     val_targets = [sample['class'] - 1 for sample in dl_obj.valid_samples]
 
-    test_documents = [remove_punct(
-        sample['title'] + " " + sample['text']) for sample in dl_obj.test_samples]
+    test_documents = [remove_punct(get_line(sample)) for sample in dl_obj.test_samples]
     test_targets = [sample['class'] - 1 for sample in dl_obj.test_samples]
 
     print("Done with loading")
@@ -111,23 +119,31 @@ def create_dataset_wdict(dataset, val_frac, batch_size, use_cuda, max_len):
         pickle_test = 'yelp_review_polarity_csv_test.pkl'
     else:
         print("Incorrect dataset ".format(dataset))
+
     pickle_train = os.path.join("./data/ngrams/", pickle_train)
-    pickle_test = os.path.join("./data/ngrams/", pickle_test)
     train_data = pickle.load(open(pickle_train, 'rb'))
-    test_data = pickle.load(open(pickle_test, 'rb'))
     random.shuffle(train_data)
+    print("Train Data Loaded")
 
     idx = int((1-val_frac) * len(train_data))
     train_docs2id = list([list(train_data[i][0]) for i in range(idx)])
     train_targets = list([train_data[i][1] for i in range(idx)])
+
     num_classes = max(train_targets)+1
 
     val_docs2id = list([list(train_data[i][0])
                         for i in range(idx, len(train_data))])
     val_targets = list([train_data[i][1] for i in range(idx, len(train_data))])
+    del train_data
+    print("Train Data Processed")
 
+    pickle_test = os.path.join("./data/ngrams/", pickle_test)
+    test_data = pickle.load(open(pickle_test, 'rb'))
+    print("Test Data Loaded")
     test_docs2id = list([list(t[0]) for t in test_data])
     test_targets = list([t[1] for t in test_data])
+    del test_data
+    print("Test Data Processed")
 
     train_dataloader = create_dataloader(
         train_docs2id, train_targets, max_len, batch_size, use_cuda, True, False)
@@ -148,8 +164,8 @@ def create_dataloader(docs2id, targets, max_len, batch_size, use_cuda=False, dro
         [d+[0]*(max_len-len(d)) if max_len > len(d) else d[:max_len] for d in docs2id])
     targets = torch.LongTensor(np.asarray(targets, 'int32'))
 
-    docs2id = docs2id.cuda() if use_cuda else docs2id
-    targets = targets.cuda() if use_cuda else targets
+    #docs2id = docs2id.cuda() if use_cuda else docs2id
+    #targets = targets.cuda() if use_cuda else targets
 
     dataset = TensorDataset(docs2id, targets)
 

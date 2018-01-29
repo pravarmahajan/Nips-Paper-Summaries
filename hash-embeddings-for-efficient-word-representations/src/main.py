@@ -36,9 +36,10 @@ optional arguments:
 """
 
 import progressbar
+import copy
+
 import torch
 import torch.nn as nn
-
 from torch.autograd import Variable
 
 import args
@@ -67,7 +68,7 @@ def main():
             parsed_args.dataset, valid_fraction=val_frac)
         dl_obj.load_data()
         train_dataloader, val_dataloader, test_dataloader = dataset.create_dataset_nodict(
-            dl_obj, parsed_args.batch_size, use_cuda, max_len)
+            dl_obj, parsed_args.vocab_size, parsed_args.batch_size, use_cuda, max_len)
         num_classes = dl_obj.num_classes
     else:
         train_dataloader, val_dataloader, test_dataloader, num_classes = dataset.create_dataset_wdict(
@@ -95,6 +96,7 @@ def main():
     prev_loss = float("inf")
 
     """Train the classification model"""
+    backoff_attempts = 0
     for _ in range(parsed_args.num_epochs):
         bar = progressbar.ProgressBar()
         print("Epoch = {}".format(_))
@@ -105,41 +107,53 @@ def main():
         for (i, d) in bar(enumerate(train_dataloader)):
             t = Variable(d[1])
             t = t.cuda() if use_cuda else t
+            d[0] = d[0].cuda() if use_cuda else d[0]
             output = model(d[0])
             loss = criterion(output, t)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            del d
+            del t
+            del output
+
         correct = 0
         total = 0
-        loss = 0
+        val_loss = 0
         for (i, d) in enumerate(val_dataloader):
             t = d[1].cuda() if use_cuda else d[1]
+            d[0] = d[0].cuda() if use_cuda else d[0]
             output = model(d[0])
             pred = output.max(1)[1].data
             correct = correct + (pred == t).sum()
             total += pred.size(0)
-            loss += criterion(output, Variable(t))
+            val_loss += criterion(output, Variable(t)).data[0]
+            del d
+            del output
 
-        loss = loss[0].data[0]
         print("Val accuracy = {:.2f}".format(correct*100/total))
-        print("Val loss = {:.2f}".format(loss))
+        print("Val loss = {:.2f}".format(val_loss))
 
-        if prev_loss < loss: # If current loss is more than prev loss, then we stop further training
+        if prev_loss < val_loss: # If current loss is more than prev loss, then we stop further training
                              # and take the last state of the model as our trained model.
-            print("Early Stopping")
             model = prev_model
+            print("Early Stopping")
             break
         else:
-            prev_loss = loss
-            prev_model = model
+            prev_loss = val_loss
+            prev_model = copy.deepcopy(model)
 
+    correct = 0
+    total = 0
     for (i, d) in enumerate(test_dataloader):
+        d[0] = d[0].cuda() if use_cuda else d[0]
         t = d[1].cuda() if use_cuda else d[1]
         pred = model(d[0]).max(1)[1].data
         correct = correct + (pred == t).sum()
         total += pred.size(0)
-    print("Test Accuracy = {:.2f}".format(correct*100/total))
+        del d
+        del t
 
+    print("Test Accuracy = {:.2f}".format(correct*100/total))
 
 main()
