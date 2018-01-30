@@ -31,5 +31,11 @@ Now execute the two scripts one after the other:
 python download_data.py
 python extract_ngrams.py
 ```
+## Running the Experiments
+## Contributing
+## Authors
+## License
+## Acknowledgements
+
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
 
