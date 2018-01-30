@@ -11,12 +11,13 @@ import heapq
 import pickle
 from collections import defaultdict
 import time
+import random
 
 import progressbar
 
-name, n = "ag_news", 10
-#name, n = "amazon_review_full", 5
-#name, n = "amazon_review_polarity", 4
+#name, n = "ag_news", 10
+#name, n = "amazon_review_full", 2
+name, n = "amazon_review_polarity", 1
 #name, n = "dbpedia", 10
 #name, n = "yahoo_answers", 6
 #name, n = "yelp_review_full", 6
@@ -35,8 +36,8 @@ def remove_punct(in_string):
 bar = progressbar.ProgressBar()
 data_cleaned = [None]*len(data)
 print("train length: {}".format(len(data)))
-
-
+#
+#
 def get_line(d):
     if 'text' in d:
         if 'title' in d:
@@ -68,23 +69,31 @@ print("n-largest selected")
 
 t1 = time.time()
 del ngrams
+del data
 t2 = time.time()
 print("Time to delete ngrams: {}".format(t2-t1))
-
+max_len = 100
 bar = progressbar.ProgressBar()
 train_doc2id = [None]*len(data_cleaned)
+
 for i, (d, c) in bar(enumerate(data_cleaned)):
     train_doc2id[i] = (set(), c)
+    temp = set()
     for idx in range(len(d)):
         for ngram in range(1, n):
             if idx+ngram <= len(d):
                 key = '_'.join(d[idx:idx+ngram])
                 if key in nlargest_dict:
-                    train_doc2id[i][0].add(nlargest_dict[key])
+                    temp.add(nlargest_dict[key])
                 else:
                     break
             else:
                 break
+
+    if len(temp) > max_len:
+        train_doc2id[i][0].update(set(random.sample(temp, max_len)))
+    else:
+        train_doc2id[i][0].update(set(temp))
 
 print("train docs vectorized")
 pickle.dump(train_doc2id, open(
@@ -101,21 +110,25 @@ data = pickle.load(
 print("test length: {}".format(len(data)))
 test_doc2id = [None]*len(data)
 bar = progressbar.ProgressBar()
-
 for i, d in bar(enumerate(data)):
     line = get_line(d)
     words = remove_punct(line.lower()).split()
     test_doc2id[i] = (set(), d['class'])
+    temp = set()
     for idx in range(len(words)):
         for ngram in range(1, n):
             if idx+ngram <= len(words):
                 key = '_'.join(words[idx:idx+ngram])
                 if key in nlargest_dict:
-                    test_doc2id[i][0].add(nlargest_dict[key])
+                    temp.add(nlargest_dict[key])
                 else:
                     break
             else:
                 break
+    if len(temp) > max_len:
+        test_doc2id[i][0].update(set(random.sample(temp, max_len)))
+    else:
+        test_doc2id[i][0].update(set(temp))
 
 print("test docs vectorized")
 pickle.dump(test_doc2id, open(

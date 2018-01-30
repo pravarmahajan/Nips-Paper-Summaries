@@ -59,7 +59,7 @@ def main():
     parsed_args = args.parse_arguments()
     agg_function = torch.sum
     use_cuda = parsed_args.use_gpu and torch.cuda.is_available()
-    max_len = 150 # All the documents will be clipped/zero padded to this length
+    max_len = 100 # All the documents will be clipped/zero padded to this length
     val_frac = 0.05 # Validation fraction
 
     """Loading dataset"""

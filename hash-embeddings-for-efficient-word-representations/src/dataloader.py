@@ -14,7 +14,7 @@ Xiang Zhang, Junbo Zhao, Yann LeCun
 class UniversalArticleDatasetProvider:
     AG_NEWS = "agnews"
     AMAZON_REVIEW_FULL = "amazon_full"
-    AMAZON_REVIEW_POLARITY = "amazon_review"
+    AMAZON_REVIEW_POLARITY = "amazon_pol"
     DBPEDIA = "dbpedia"
     YAHOO_ANSWERS = "yahoo"
     YELP_REVIEW_FULL = "yelp_full"
