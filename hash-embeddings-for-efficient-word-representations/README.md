@@ -1,6 +1,6 @@
 # Paper Replication - Hash Embeddings for Efficient Word Representations
 
-This is a replication of a NIPS 2017 paper - [Hash Embeddings for Efficient Word Representations](https://papers.nips.cc/paper/7078-hash-embeddings-for-efficient-word-representations).
+This is a replication of a NIPS 2017 paper - [Hash Embeddings for Efficient Word Representations](https://papers.nips.cc/paper/7078-hash-embeddings-for-efficient-word-representations). Please refer to the [replication report.pdf](replication report.pdf) for the summary of our replication results.
 
 ## Getting Started
 You can clone the repository on your machine by issuing the following command on the terminal:
