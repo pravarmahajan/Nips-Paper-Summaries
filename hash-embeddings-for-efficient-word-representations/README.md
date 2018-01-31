@@ -28,6 +28,7 @@ cd ..
 ```
 Now execute the two scripts one after the other:
 ```
+cd src
 python download_data.py
 python extract_ngrams.py
 ```
