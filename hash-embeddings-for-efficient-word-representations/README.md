@@ -31,7 +31,32 @@ Now execute the two scripts one after the other:
 python src/download_data.py
 python src/extract_ngrams.py
 ```
+Whereas `download.py` downloads all the datasets, `extract_ngrams.py` only works on the specified dataset in the same script. Change the dataset name to extract ngrams from each of those datasets.
+
 ## Running the Experiments
+
+The easiest way to run the experiments is via the script `run.sh`. In the parent directory, type:
+```
+sh run.sh
+```
+Alternatively, you may execute the main script as:
+```
+python src/main.py [args]
+```
+Details on the optional arguments are available by executing the main script with `-h` flag:
+```
+python src/main.py -h
+```
+A few important arguments to the script:
+* `-h`: Displays help
+* `-ds`: Dataset to work on. Should be one of `agnews`, `dbpedia`, `yelp_pol`, `yelp_full`, `yahoo`, `amazon_full`, `amazon_pol`
+* `-K`: Vocabulary size when using dictionary, size of the first hash layer in case of no dictionary
+* `-k`: Number of hash functions
+* `-B`: Number of embedding buckets
+* `-d`: Embedding dimension. All words will be mapped into continuous vectors of this size.
+* `-H`: Hidden layers, if any
+* `-emb`: Hashing type, one of `std` and `hash`. Hash embedding uses the embedding model described in this paper, standard embedding generates embedding for each word individually.
+* `-dict`: Toggle between dictionary based model or no dictionary model
 
 ## Contributing
 Contributions to improve and enhance the codebase are always welcome. Feel free to submit a pull request :-)
