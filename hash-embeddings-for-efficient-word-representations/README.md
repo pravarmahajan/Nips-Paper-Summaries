@@ -28,9 +28,8 @@ cd ..
 ```
 Now execute the two scripts one after the other:
 ```
-cd src
-python download_data.py
-python extract_ngrams.py
+python src/download_data.py
+python src/extract_ngrams.py
 ```
 ## Running the Experiments
 
