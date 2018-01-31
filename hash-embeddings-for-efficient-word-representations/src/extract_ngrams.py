@@ -17,14 +17,14 @@ import progressbar
 
 #name, n = "ag_news", 10
 #name, n = "amazon_review_full", 2
-name, n = "amazon_review_polarity", 1
+#name, n = "amazon_review_polarity", 1
 #name, n = "dbpedia", 10
 #name, n = "yahoo_answers", 6
 #name, n = "yelp_review_full", 6
-#name, n = "yelp_review_polarity", 6
+name, n = "yelp_review_polarity", 6
 
 data = pickle.load(
-    open('../data/preprocessed/{}_csv_train.pkl'.format(name), 'rb'))
+    open('./data/preprocessed/{}_csv_train.pkl'.format(name), 'rb'))
 ngrams = defaultdict(int)
 punct_patt = re.compile('[%s]' % re.escape(string.punctuation))
 
