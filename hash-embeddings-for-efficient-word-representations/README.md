@@ -37,7 +37,7 @@ python extract_ngrams.py
 ## Contributing
 Contributions to improve and enhance the codebase are always welcome. Feel free to submit a pull request :-)
 ## Authors
-* Pravar D Mahajan
+* [Pravar D Mahajan](https://pravarmahajan.github.io)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
