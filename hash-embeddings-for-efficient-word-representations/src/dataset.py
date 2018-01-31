@@ -65,15 +65,19 @@ def get_line(d):
 
     return line
 
+
 def create_dataset_nodict(dl_obj, vocab_size, batch_size, use_cuda, max_len):
     """Create dataset without using dictionary (section 5.3)"""
-    train_documents = [remove_punct(get_line(sample)) for sample in dl_obj.train_samples]
+    train_documents = [remove_punct(get_line(sample))
+                       for sample in dl_obj.train_samples]
     train_targets = [sample['class'] - 1 for sample in dl_obj.train_samples]
 
-    val_documents = [remove_punct(get_line(sample)) for sample in dl_obj.valid_samples]
+    val_documents = [remove_punct(get_line(sample))
+                     for sample in dl_obj.valid_samples]
     val_targets = [sample['class'] - 1 for sample in dl_obj.valid_samples]
 
-    test_documents = [remove_punct(get_line(sample)) for sample in dl_obj.test_samples]
+    test_documents = [remove_punct(get_line(sample))
+                      for sample in dl_obj.test_samples]
     test_targets = [sample['class'] - 1 for sample in dl_obj.test_samples]
 
     print("Done with loading")

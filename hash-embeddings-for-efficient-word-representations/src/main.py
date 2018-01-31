@@ -59,8 +59,8 @@ def main():
     parsed_args = args.parse_arguments()
     agg_function = torch.sum
     use_cuda = parsed_args.use_gpu and torch.cuda.is_available()
-    max_len = 100 # All the documents will be clipped/zero padded to this length
-    val_frac = 0.05 # Validation fraction
+    max_len = 100  # All the documents will be clipped/zero padded to this length
+    val_frac = 0.05  # Validation fraction
 
     """Loading dataset"""
     if not parsed_args.with_dict:
@@ -96,7 +96,6 @@ def main():
     prev_loss = float("inf")
 
     """Train the classification model"""
-    backoff_attempts = 0
     for _ in range(parsed_args.num_epochs):
         bar = progressbar.ProgressBar()
         print("Epoch = {}".format(_))
@@ -134,7 +133,7 @@ def main():
         print("Val accuracy = {:.2f}".format(correct*100/total))
         print("Val loss = {:.2f}".format(val_loss))
 
-        if prev_loss < val_loss: # If current loss is more than prev loss, then we stop further training
+        if prev_loss < val_loss:  # If current loss is more than prev loss, then we stop further training
                              # and take the last state of the model as our trained model.
             model = prev_model
             print("Early Stopping")
@@ -155,5 +154,6 @@ def main():
         del t
 
     print("Test Accuracy = {:.2f}".format(correct*100/total))
+
 
 main()

@@ -20,9 +20,9 @@ import progressbar
 #name, n = "amazon_review_polarity", 1
 #name, n = "dbpedia", 10
 #name, n = "yahoo_answers", 6
-#name, n = "yelp_review_full", 6
-name, n = "yelp_review_polarity", 6
-
+name, n = "yelp_review_full", 6
+#name, n = "yelp_review_polarity", 6
+limit = 1000000
 data = pickle.load(
     open('./data/preprocessed/{}_csv_train.pkl'.format(name), 'rb'))
 ngrams = defaultdict(int)
@@ -36,8 +36,8 @@ def remove_punct(in_string):
 bar = progressbar.ProgressBar()
 data_cleaned = [None]*len(data)
 print("train length: {}".format(len(data)))
-#
-#
+
+
 def get_line(d):
     if 'text' in d:
         if 'title' in d:
@@ -61,7 +61,7 @@ for i, d in bar(enumerate(data)):
 
 print("Ngrams constructed")
 
-nlargest = heapq.nlargest(1000000, ngrams.items(), key=operator.itemgetter(1))
+nlargest = heapq.nlargest(limit-1, ngrams.items(), key=operator.itemgetter(1))
 nlargest_dict = dict()
 for ng in nlargest:
     nlargest_dict[ng[0]] = len(nlargest_dict)+1
@@ -97,7 +97,7 @@ for i, (d, c) in bar(enumerate(data_cleaned)):
 
 print("train docs vectorized")
 pickle.dump(train_doc2id, open(
-    '../data/ngrams/{}_csv_train.pkl'.format(name), 'wb'))
+    './data/ngrams/{}_csv_train.pkl'.format(name), 'wb'))
 
 t1 = time.time()
 del train_doc2id
@@ -106,7 +106,7 @@ t2 = time.time()
 print("Time to delete train elements: {}".format(t2-t1))
 
 data = pickle.load(
-    open('../data/preprocessed/{}_csv_test.pkl'.format(name), 'rb'))
+    open('./data/preprocessed/{}_csv_test.pkl'.format(name), 'rb'))
 print("test length: {}".format(len(data)))
 test_doc2id = [None]*len(data)
 bar = progressbar.ProgressBar()
@@ -132,4 +132,4 @@ for i, d in bar(enumerate(data)):
 
 print("test docs vectorized")
 pickle.dump(test_doc2id, open(
-    '../data/ngrams/{}_csv_test.pkl'.format(name), 'wb'))
+    './data/ngrams/{}_csv_test.pkl'.format(name), 'wb'))
