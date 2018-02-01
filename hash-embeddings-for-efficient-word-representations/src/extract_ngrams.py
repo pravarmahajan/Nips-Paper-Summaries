@@ -16,11 +16,11 @@ import random
 import progressbar
 
 #name, n = "ag_news", 10
-#name, n = "amazon_review_full", 2
+name, n = "amazon_review_full", 1
 #name, n = "amazon_review_polarity", 1
 #name, n = "dbpedia", 10
-#name, n = "yahoo_answers", 6
-name, n = "yelp_review_full", 6
+#name, n = "yahoo_answers", 5
+#name, n = "yelp_review_full", 6
 #name, n = "yelp_review_polarity", 6
 limit = 1000000
 data = pickle.load(
@@ -55,7 +55,7 @@ for i, d in bar(enumerate(data)):
     words = remove_punct(line.lower()).split()
     data_cleaned[i] = (words, d['class'])
     for idx in range(len(words)):
-        for ngram in range(1, n):
+        for ngram in range(1, n+1):
             if idx+ngram <= len(words):
                 ngrams['_'.join(words[idx:idx+ngram])] += 1
 
@@ -75,12 +75,15 @@ print("Time to delete ngrams: {}".format(t2-t1))
 max_len = 100
 bar = progressbar.ProgressBar()
 train_doc2id = [None]*len(data_cleaned)
+train_targets = [None]*len(data_cleaned)
 
+import ipdb; ipdb.set_trace()
 for i, (d, c) in bar(enumerate(data_cleaned)):
-    train_doc2id[i] = (set(), c)
+    train_doc2id[i] = list()
+    train_targets[i] = c
     temp = set()
     for idx in range(len(d)):
-        for ngram in range(1, n):
+        for ngram in range(1, n+1):
             if idx+ngram <= len(d):
                 key = '_'.join(d[idx:idx+ngram])
                 if key in nlargest_dict:
@@ -91,12 +94,12 @@ for i, (d, c) in bar(enumerate(data_cleaned)):
                 break
 
     if len(temp) > max_len:
-        train_doc2id[i][0].update(set(random.sample(temp, max_len)))
+        train_doc2id[i].extend(random.sample(temp, max_len))
     else:
-        train_doc2id[i][0].update(set(temp))
+        train_doc2id[i].extend(list(temp))
 
 print("train docs vectorized")
-pickle.dump(train_doc2id, open(
+pickle.dump((train_doc2id, train_targets), open(
     './data/ngrams/{}_csv_train.pkl'.format(name), 'wb'))
 
 t1 = time.time()
@@ -109,14 +112,17 @@ data = pickle.load(
     open('./data/preprocessed/{}_csv_test.pkl'.format(name), 'rb'))
 print("test length: {}".format(len(data)))
 test_doc2id = [None]*len(data)
+test_targets = [None]*len(data)
 bar = progressbar.ProgressBar()
+
 for i, d in bar(enumerate(data)):
     line = get_line(d)
     words = remove_punct(line.lower()).split()
-    test_doc2id[i] = (set(), d['class'])
+    test_doc2id[i] = list()
+    test_targets[i] = d['class']
     temp = set()
     for idx in range(len(words)):
-        for ngram in range(1, n):
+        for ngram in range(1, n+1):
             if idx+ngram <= len(words):
                 key = '_'.join(words[idx:idx+ngram])
                 if key in nlargest_dict:
@@ -126,10 +132,10 @@ for i, d in bar(enumerate(data)):
             else:
                 break
     if len(temp) > max_len:
-        test_doc2id[i][0].update(set(random.sample(temp, max_len)))
+        test_doc2id[i].extend(random.sample(temp, max_len))
     else:
-        test_doc2id[i][0].update(set(temp))
+        test_doc2id[i].extend(list(temp))
 
 print("test docs vectorized")
-pickle.dump(test_doc2id, open(
+pickle.dump((test_doc2id, test_targets), open(
     './data/ngrams/{}_csv_test.pkl'.format(name), 'wb'))

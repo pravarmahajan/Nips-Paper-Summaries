@@ -125,29 +125,16 @@ def create_dataset_wdict(dataset, val_frac, batch_size, use_cuda, max_len):
         print("Incorrect dataset ".format(dataset))
 
     pickle_train = os.path.join("./data/ngrams/", pickle_train)
-    train_data = pickle.load(open(pickle_train, 'rb'))
-    random.shuffle(train_data)
-    print("Train Data Loaded")
-
-    idx = int((1-val_frac) * len(train_data))
-    train_docs2id = list([list(train_data[i][0]) for i in range(idx)])
-    train_targets = list([train_data[i][1] for i in range(idx)])
-
+    train_docs2id, train_targets = pickle.load(open(pickle_train, 'rb'))
     num_classes = max(train_targets)+1
+    train_docs2id, train_targets, val_docs2id, val_targets = \
+            shuffle_and_split(train_docs2id, train_targets, 1-val_frac)
 
-    val_docs2id = list([list(train_data[i][0])
-                        for i in range(idx, len(train_data))])
-    val_targets = list([train_data[i][1] for i in range(idx, len(train_data))])
-    del train_data
-    print("Train Data Processed")
+    print("Train and Val Data Processed")
 
     pickle_test = os.path.join("./data/ngrams/", pickle_test)
-    test_data = pickle.load(open(pickle_test, 'rb'))
-    print("Test Data Loaded")
-    test_docs2id = list([list(t[0]) for t in test_data])
-    test_targets = list([t[1] for t in test_data])
-    del test_data
-    print("Test Data Processed")
+    test_docs2id, test_targets = pickle.load(open(pickle_test, 'rb'))
+    print("Test Data Loaded and Processed")
 
     train_dataloader = create_dataloader(
         train_docs2id, train_targets, max_len, batch_size, use_cuda, True, False)
@@ -158,6 +145,12 @@ def create_dataset_wdict(dataset, val_frac, batch_size, use_cuda, max_len):
 
     return train_dataloader, val_dataloader, test_dataloader, num_classes
 
+def shuffle_and_split(data, targets, split_point = 0.95):
+    idx = int(split_point * len(data))
+    temp = list(zip(data, targets))
+    random.shuffle(temp)
+    train_data, train_targets = zip(*temp)
+    return train_data[:idx], train_targets[:idx], train_data[idx:], train_targets[idx:]
 
 def create_dataloader(docs2id, targets, max_len, batch_size, use_cuda=False, dropout=False, shuffle=False):
     """A wrapper function to generate dataloader objects"""
@@ -167,9 +160,6 @@ def create_dataloader(docs2id, targets, max_len, batch_size, use_cuda=False, dro
     docs2id = torch.LongTensor(
         [d+[0]*(max_len-len(d)) if max_len > len(d) else d[:max_len] for d in docs2id])
     targets = torch.LongTensor(np.asarray(targets, 'int32'))
-
-    #docs2id = docs2id.cuda() if use_cuda else docs2id
-    #targets = targets.cuda() if use_cuda else targets
 
     dataset = TensorDataset(docs2id, targets)
 
